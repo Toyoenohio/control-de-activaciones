@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Activaciones</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Control de Activaciones</h1>
+            <p class="subtitle">Sistema de gestión y seguimiento</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Formulario de nueva activación -->
+            <section class="card">
+                <h2>Nueva Activación</h2>
+                <form id="activacionForm">
+                    <div class="form-group">
+                        <label for="fecha">Fecha</label>
+                        <input type="date" id="fecha" name="fecha" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lugar">Lugar</label>
+                        <input type="text" id="lugar" name="lugar" placeholder="Nombre del lugar" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="promotor">Promotor/a</label>
+                        <input type="text" id="promotor" name="promotor" placeholder="Nombre del promotor" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="producto">Producto</label>
+                        <select id="producto" name="producto" required>
+                            <option value="" disabled selected>Seleccioná un producto</option>
+                            <option value="Old Parr Tropical">Old Parr Tropical</option>
+                            <option value="Old Parr 12">Old Parr 12</option>
+                            <option value="Old Parr 15">Old Parr 15</option>
+                            <option value="Old Parr 18">Old Parr 18</option>
+                            <option value="Buchanan's">Buchanan's</option>
+                            <option value="Johnnie Walker">Johnnie Walker</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipo">Tipo de Activación</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="" disabled selected>Seleccioná un tipo</option>
+                            <option value="Degustación">Degustación</option>
+                            <option value="Activación BTL">Activación BTL</option>
+                            <option value="Evento">Evento</option>
+                            <option value="Punto de Venta">Punto de Venta</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad de Muestras</label>
+                        <input type="number" id="cantidad" name="cantidad" placeholder="0" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones</label>
+                        <textarea id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Registrar Activación</button>
+                </form>
+            </section>
+
+            <!-- Lista de activaciones -->
+            <section class="card">
+                <h2>Activaciones Registradas</h2>
+                <div class="filters">
+                    <input type="text" id="searchInput" placeholder="Buscar por lugar o promotor..." class="search-input">
+                    <select id="filterProduct" class="filter-select">
+                        <option value="">Todos los productos</option>
+                        <option value="Old Parr Tropical">Old Parr Tropical</option>
+                        <option value="Old Parr 12">Old Parr 12</option>
+                        <option value="Old Parr 15">Old Parr 15</option>
+                        <option value="Old Parr 18">Old Parr 18</option>
+                        <option value="Buchanan's">Buchanan's</option>
+                        <option value="Johnnie Walker">Johnnie Walker</option>
+                    </select>
+                </div>
+                <div id="activacionesList" class="activaciones-list">
+                    <!-- Las activaciones se cargarán aquí dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Estadísticas -->
+            <section class="card stats-card">
+                <h2>Estadísticas</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalActivaciones">0</div>
+                        <div class="stat-label">Total Activaciones</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalMuestras">0</div>
+                        <div class="stat-label">Total Muestras</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="productosDiferentes">0</div>
+                        <div class="stat-label">Productos</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
