@@ -1,249 +1,226 @@
-// Control de Activaciones - Script Principal
+// Control de Inventario - Script Principal
 
-// Almacenamiento local para las activaciones
-let activaciones = [];
+// Webhook URL
+const WEBHOOK_URL = 'https://n8nciwok-n8n.wz1vdn.easypanel.host/webhook/inventario';
 
-// Cargar activaciones guardadas al iniciar
+// Almacenamiento local para movimientos
+let movimientos = [];
+
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
-    cargarActivaciones();
-    renderizarActivaciones();
-    actualizarEstadisticas();
-    
-    // Establecer fecha de hoy por defecto
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha').value = hoy;
+    cargarMovimientos();
+    renderizarMovimientos();
+    setupBuscadorProductos();
 });
 
-// Manejar el envío del formulario
-document.getElementById('activacionForm').addEventListener('submit', function(e) {
+// Configurar buscador de productos
+function setupBuscadorProductos() {
+    const searchInput = document.getElementById('productoSearch');
+    const select = document.getElementById('producto');
+    const options = Array.from(select.options);
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        options.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+                return;
+            }
+            
+            const matches = option.text.toLowerCase().includes(searchTerm);
+            option.style.display = matches ? 'block' : 'none';
+        });
+        
+        // Si hay un solo resultado visible, seleccionarlo automáticamente
+        const visibleOptions = options.filter(opt => opt.style.display !== 'none' && opt.value !== '');
+        if (visibleOptions.length === 1 && searchTerm.length > 0) {
+            select.value = visibleOptions[0].value;
+        }
+    });
+    
+    // Limpiar búsqueda al seleccionar
+    select.addEventListener('change', () => {
+        searchInput.value = '';
+    });
+}
+
+// Manejar envío del formulario
+document.getElementById('inventarioForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const nuevaActivacion = {
-        id: Date.now(),
-        fecha: document.getElementById('fecha').value,
-        lugar: document.getElementById('lugar').value.trim(),
-        promotor: document.getElementById('promotor').value.trim(),
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    
+    // Deshabilitar botón y mostrar loading
+    submitBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'block';
+    
+    // Recopilar datos del formulario
+    const data = {
         producto: document.getElementById('producto').value,
-        tipo: document.getElementById('tipo').value,
         cantidad: parseInt(document.getElementById('cantidad').value),
-        observaciones: document.getElementById('observaciones').value.trim(),
-        registradoEn: new Date().toISOString()
+        tipo: document.querySelector('input[name="tipo"]:checked').value,
+        observacion: document.getElementById('observacion').value.trim(),
+        fecha: new Date().toISOString(),
+        timestamp: Date.now()
     };
     
-    // Agregar al array
-    activaciones.unshift(nuevaActivacion);
-    
-    // Guardar en localStorage
-    guardarActivaciones();
-    
-    // Renderizar y actualizar
-    renderizarActivaciones();
-    actualizarEstadisticas();
-    
-    // Resetear formulario
-    this.reset();
-    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-    
-    // Mostrar mensaje de éxito
-    mostrarNotificacion('¡Activación registrada exitosamente!', 'success');
+    try {
+        // Enviar al webhook
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            // Guardar movimiento localmente
+            movimientos.unshift(data);
+            guardarMovimientos();
+            
+            // Mostrar mensaje de éxito
+            mostrarExito();
+            
+            // Resetear formulario
+            this.reset();
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('No se pudo conectar con el servidor. Verificá tu conexión a internet.');
+    } finally {
+        // Restaurar botón
+        submitBtn.disabled = false;
+        btnText.style.display = 'block';
+        btnLoading.style.display = 'none';
+    }
 });
 
 // Función para guardar en localStorage
-function guardarActivaciones() {
-    localStorage.setItem('activaciones', JSON.stringify(activaciones));
+function guardarMovimientos() {
+    localStorage.setItem('movimientos', JSON.stringify(movimientos));
 }
 
 // Función para cargar desde localStorage
-function cargarActivaciones() {
-    const guardadas = localStorage.getItem('activaciones');
-    if (guardadas) {
-        activaciones = JSON.parse(guardadas);
+function cargarMovimientos() {
+    const guardados = localStorage.getItem('movimientos');
+    if (guardados) {
+        movimientos = JSON.parse(guardados);
     }
 }
 
-// Función para renderizar la lista de activaciones
-function renderizarActivaciones(filtroTexto = '', filtroProducto = '') {
-    const contenedor = document.getElementById('activacionesList');
+// Función para renderizar la lista de movimientos
+function renderizarMovimientos() {
+    const contenedor = document.getElementById('movimientosList');
     
-    // Filtrar activaciones
-    let activacionesFiltradas = activaciones;
-    
-    if (filtroTexto) {
-        const texto = filtroTexto.toLowerCase();
-        activacionesFiltradas = activacionesFiltradas.filter(act => 
-            act.lugar.toLowerCase().includes(texto) ||
-            act.promotor.toLowerCase().includes(texto)
-        );
-    }
-    
-    if (filtroProducto) {
-        activacionesFiltradas = activacionesFiltradas.filter(act => 
-            act.producto === filtroProducto
-        );
-    }
-    
-    if (activacionesFiltradas.length === 0) {
+    if (movimientos.length === 0) {
         contenedor.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">📋</div>
-                <div class="empty-state-text">
-                    ${activaciones.length === 0 
-                        ? 'No hay activaciones registradas aún. ¡Comenzá a registrar!' 
-                        : 'No se encontraron activaciones con los filtros seleccionados.'}
-                </div>
+                <div class="empty-state-text">No hay movimientos recientes</div>
             </div>
         `;
         return;
     }
     
-    contenedor.innerHTML = activacionesFiltradas.map(act => `
-        <div class="activacion-item">
-            <div class="activacion-header">
-                <div class="activacion-title">📍 ${act.lugar}</div>
-                <div class="activacion-date">${formatearFecha(act.fecha)}</div>
+    // Mostrar solo los últimos 20 movimientos
+    const recientes = movimientos.slice(0, 20);
+    
+    contenedor.innerHTML = recientes.map(mov => `
+        <div class="movimiento-item ${mov.tipo}">
+            <div class="movimiento-header">
+                <div class="movimiento-producto">${mov.producto}</div>
+                <div class="movimiento-tipo ${mov.tipo}">${mov.tipo}</div>
             </div>
-            <div class="activacion-details">
-                <div class="detail-item">
-                    <span class="detail-label">Promotor/a:</span>
-                    <span class="detail-value">${act.promotor}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Producto:</span>
-                    <span class="detail-value">${act.producto}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Tipo:</span>
-                    <span class="detail-value">${act.tipo}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Muestras:</span>
-                    <span class="detail-value">${act.cantidad}</span>
-                </div>
+            <div class="movimiento-details">
+                <div class="movimiento-cantidad">${mov.tipo === 'entrada' ? '+' : '-'}${mov.cantidad}</div>
+                <div class="movimiento-fecha">${formatearFecha(mov.fecha)}</div>
             </div>
-            ${act.observaciones ? `
-                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; font-size: 13px; color: #666;">
-                    <strong>Observaciones:</strong> ${act.observaciones}
-                </div>
-            ` : ''}
+            ${mov.observacion ? `<div style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;">📝 ${mov.observacion}</div>` : ''}
         </div>
     `).join('');
-}
-
-// Función para actualizar estadísticas
-function actualizarEstadisticas() {
-    const totalActivaciones = activaciones.length;
-    const totalMuestras = activaciones.reduce((sum, act) => sum + act.cantidad, 0);
-    const productosUnicos = new Set(activaciones.map(act => act.producto)).size;
-    
-    document.getElementById('totalActivaciones').textContent = totalActivaciones;
-    document.getElementById('totalMuestras').textContent = totalMuestras;
-    document.getElementById('productosDiferentes').textContent = productosUnicos;
 }
 
 // Función para formatear fecha
 function formatearFecha(fechaISO) {
     const fecha = new Date(fechaISO);
-    const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
-    return fecha.toLocaleDateString('es-ES', opciones);
+    const ahora = new Date();
+    const diffMs = ahora - fecha;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Ahora mismo';
+    if (diffMins < 60) return `Hace ${diffMins}m`;
+    if (diffHours < 24) return `Hace ${diffHours}h`;
+    if (diffDays < 7) return `Hace ${diffDays}d`;
+    
+    return fecha.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
-// Función para mostrar notificación
-function mostrarNotificacion(mensaje, tipo = 'success') {
-    // Crear elemento de notificación
-    const notificacion = document.createElement('div');
-    notificacion.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        background: ${tipo === 'success' ? '#4CAF50' : '#f44336'};
-        color: white;
-        border-radius: 10px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        z-index: 1000;
-        animation: slideIn 0.3s ease;
-    `;
-    notificacion.textContent = mensaje;
+// Función para mostrar mensaje de éxito
+function mostrarExito() {
+    document.getElementById('inventarioForm').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'block';
+    document.getElementById('errorMessage').style.display = 'none';
     
-    document.body.appendChild(notificacion);
-    
-    // Eliminar después de 3 segundos
-    setTimeout(() => {
-        notificacion.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notificacion.remove(), 300);
-    }, 3000);
+    // Actualizar lista de movimientos
+    renderizarMovimientos();
 }
 
-// Agregar estilos para animaciones de notificación
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+// Función para resetear formulario
+function resetForm() {
+    document.getElementById('inventarioForm').reset();
+    document.getElementById('inventarioForm').style.display = 'block';
+    document.getElementById('successMessage').style.display = 'none';
+    document.getElementById('errorMessage').style.display = 'none';
+    document.getElementById('productoSearch').value = '';
+}
 
-// Manejar filtros de búsqueda
-document.getElementById('searchInput').addEventListener('input', function(e) {
-    const filtroProducto = document.getElementById('filterProduct').value;
-    renderizarActivaciones(e.target.value, filtroProducto);
-});
+// Función para mostrar error
+function mostrarError(mensaje) {
+    document.getElementById('errorText').textContent = mensaje;
+    document.getElementById('inventarioForm').style.display = 'none';
+    document.getElementById('errorMessage').style.display = 'block';
+    document.getElementById('successMessage').style.display = 'none';
+}
 
-document.getElementById('filterProduct').addEventListener('change', function(e) {
-    const filtroTexto = document.getElementById('searchInput').value;
-    renderizarActivaciones(filtroTexto, e.target.value);
-});
+// Función para ocultar error
+function hideError() {
+    document.getElementById('inventarioForm').style.display = 'block';
+    document.getElementById('errorMessage').style.display = 'none';
+}
 
-// Función para exportar datos (útil para backup)
+// Función para exportar datos (backup)
 function exportarDatos() {
-    const dataStr = JSON.stringify(activaciones, null, 2);
+    const dataStr = JSON.stringify(movimientos, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `activaciones_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `inventario_backup_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     
     URL.revokeObjectURL(url);
 }
 
-// Función para importar datos
-function importarDatos(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const datosImportados = JSON.parse(e.target.result);
-            if (Array.isArray(datosImportados)) {
-                activaciones = [...datosImportados, ...activaciones];
-                guardarActivaciones();
-                renderizarActivaciones();
-                actualizarEstadisticas();
-                mostrarNotificacion('¡Datos importados exitosamente!', 'success');
-            } else {
-                throw new Error('Formato inválido');
-            }
-        } catch (error) {
-            mostrarNotificacion('Error al importar datos. Verificá el archivo.', 'error');
-        }
-    };
-    reader.readAsText(file);
+// Función para limpiar historial
+function limpiarHistorial() {
+    if (confirm('¿Estás seguro de que querés borrar todo el historial de movimientos? Esta acción no se puede deshacer.')) {
+        movimientos = [];
+        guardarMovimientos();
+        renderizarMovimientos();
+    }
 }

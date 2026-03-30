@@ -3,109 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Activaciones</title>
+    <title>Control de Inventario</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📊 Control de Activaciones</h1>
-            <p class="subtitle">Sistema de gestión y seguimiento</p>
+            <h1>📦 Control de Inventario</h1>
+            <p class="subtitle">Gestión de entradas y salidas</p>
         </header>
 
-        <div class="dashboard">
-            <!-- Formulario de nueva activación -->
-            <section class="card">
-                <h2>Nueva Activación</h2>
-                <form id="activacionForm">
-                    <div class="form-group">
-                        <label for="fecha">Fecha</label>
-                        <input type="date" id="fecha" name="fecha" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="lugar">Lugar</label>
-                        <input type="text" id="lugar" name="lugar" placeholder="Nombre del lugar" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="promotor">Promotor/a</label>
-                        <input type="text" id="promotor" name="promotor" placeholder="Nombre del promotor" required>
-                    </div>
-
+        <div class="main-content">
+            <!-- Formulario de movimiento -->
+            <section class="card form-card">
+                <h2>Nuevo Movimiento</h2>
+                <form id="inventarioForm">
                     <div class="form-group">
                         <label for="producto">Producto</label>
-                        <select id="producto" name="producto" required>
-                            <option value="" disabled selected>Seleccioná un producto</option>
-                            <option value="Old Parr Tropical">Old Parr Tropical</option>
-                            <option value="Old Parr 12">Old Parr 12</option>
-                            <option value="Old Parr 15">Old Parr 15</option>
-                            <option value="Old Parr 18">Old Parr 18</option>
-                            <option value="Buchanan's">Buchanan's</option>
-                            <option value="Johnnie Walker">Johnnie Walker</option>
-                        </select>
+                        <div class="select-with-search">
+                            <select id="producto" name="producto" required>
+                                <option value="" disabled selected>Buscá y seleccioná un producto</option>
+                                <option value="Old Parr Tropical 750ml">Old Parr Tropical 750ml</option>
+                                <option value="Old Parr 12 Años 750ml">Old Parr 12 Años 750ml</option>
+                                <option value="Old Parr 15 Años 750ml">Old Parr 15 Años 750ml</option>
+                                <option value="Old Parr 18 Años 750ml">Old Parr 18 Años 750ml</option>
+                                <option value="Buchanan's Deluxe 12 Años 750ml">Buchanan's Deluxe 12 Años 750ml</option>
+                                <option value="Buchanan's 15 Años 750ml">Buchanan's 15 Años 750ml</option>
+                                <option value="Buchanan's 18 Años 750ml">Buchanan's 18 Años 750ml</option>
+                                <option value="Johnnie Walker Black Label 750ml">Johnnie Walker Black Label 750ml</option>
+                                <option value="Johnnie Walker Red Label 750ml">Johnnie Walker Red Label 750ml</option>
+                                <option value="Johnnie Walker Blue Label 750ml">Johnnie Walker Blue Label 750ml</option>
+                                <option value="Vasos Old Parr Naranja">Vasos Old Parr Naranja</option>
+                                <option value="Vasos Old Parr Rojos">Vasos Old Parr Rojos</option>
+                                <option value="Vasos Old Parr Morados">Vasos Old Parr Morados</option>
+                                <option value="Hielo">Hielo</option>
+                                <option value="Servilletas">Servilletas</option>
+                                <option value="Bandejas">Bandejas</option>
+                            </select>
+                            <input type="text" id="productoSearch" class="search-input" placeholder="🔍 Buscar producto...">
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="tipo">Tipo de Activación</label>
-                        <select id="tipo" name="tipo" required>
-                            <option value="" disabled selected>Seleccioná un tipo</option>
-                            <option value="Degustación">Degustación</option>
-                            <option value="Activación BTL">Activación BTL</option>
-                            <option value="Evento">Evento</option>
-                            <option value="Punto de Venta">Punto de Venta</option>
-                        </select>
+                        <label for="cantidad">Cantidad</label>
+                        <input type="number" id="cantidad" name="cantidad" placeholder="0" min="1" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="cantidad">Cantidad de Muestras</label>
-                        <input type="number" id="cantidad" name="cantidad" placeholder="0" min="0" required>
+                        <label>Tipo de Movimiento</label>
+                        <div class="toggle-group">
+                            <div class="toggle-option">
+                                <input type="radio" name="tipo" id="entrada" value="entrada" required>
+                                <label for="entrada">
+                                    <span class="icon">📥</span>
+                                    <span class="text">Entrada</span>
+                                </label>
+                            </div>
+                            <div class="toggle-option">
+                                <input type="radio" name="tipo" id="salida" value="salida" required>
+                                <label for="salida">
+                                    <span class="icon">📤</span>
+                                    <span class="text">Salida</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="observaciones">Observaciones</label>
-                        <textarea id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+                        <label for="observacion">Observación (opcional)</label>
+                        <textarea id="observacion" name="observacion" rows="2" placeholder="Notas adicionales..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn-primary">Registrar Activación</button>
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <span class="btn-text">Registrar Movimiento</span>
+                        <span class="btn-loading" style="display: none;">Enviando...</span>
+                    </button>
                 </form>
-            </section>
 
-            <!-- Lista de activaciones -->
-            <section class="card">
-                <h2>Activaciones Registradas</h2>
-                <div class="filters">
-                    <input type="text" id="searchInput" placeholder="Buscar por lugar o promotor..." class="search-input">
-                    <select id="filterProduct" class="filter-select">
-                        <option value="">Todos los productos</option>
-                        <option value="Old Parr Tropical">Old Parr Tropical</option>
-                        <option value="Old Parr 12">Old Parr 12</option>
-                        <option value="Old Parr 15">Old Parr 15</option>
-                        <option value="Old Parr 18">Old Parr 18</option>
-                        <option value="Buchanan's">Buchanan's</option>
-                        <option value="Johnnie Walker">Johnnie Walker</option>
-                    </select>
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-icon">✅</div>
+                    <h3>¡Movimiento registrado!</h3>
+                    <p>El movimiento se envió correctamente al sistema.</p>
+                    <button type="button" class="btn-secondary" onclick="resetForm()">Nuevo Movimiento</button>
                 </div>
-                <div id="activacionesList" class="activaciones-list">
-                    <!-- Las activaciones se cargarán aquí dinámicamente -->
+
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <div class="error-icon">❌</div>
+                    <h3>Error al registrar</h3>
+                    <p id="errorText"></p>
+                    <button type="button" class="btn-secondary" onclick="hideError()">Intentar de nuevo</button>
                 </div>
             </section>
 
-            <!-- Estadísticas -->
-            <section class="card stats-card">
-                <h2>Estadísticas</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalActivaciones">0</div>
-                        <div class="stat-label">Total Activaciones</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalMuestras">0</div>
-                        <div class="stat-label">Total Muestras</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="productosDiferentes">0</div>
-                        <div class="stat-label">Productos</div>
+            <!-- Historial reciente -->
+            <section class="card history-card">
+                <h2>Últimos Movimientos</h2>
+                <div id="movimientosList" class="movimientos-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">No hay movimientos recientes</div>
                     </div>
                 </div>
             </section>
